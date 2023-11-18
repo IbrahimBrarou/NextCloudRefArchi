@@ -1,0 +1,70 @@
+---
+- name: Ensure old versions of Docker are not installed (Docker)
+  ansible.builtin.package:
+    name:
+      - docker
+      - docker-engine
+    state: absent
+  register: result
+  retries: 10
+  delay: 10
+  until: result is not failed
+
+- name: Ensure dependencies are installed (Docker)
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+  register: result
+  retries: 10
+  delay: 10
+  until: result is not failed
+
+- name: Add Docker apt key to keyring.
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    checksum: sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570
+    mode: '0644'
+
+- name: Add Docker repository.
+  ansible.builtin.apt_repository:
+    filename: docker
+    repo: 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable'
+    state: present
+    update_cache: true
+
+- name: Install Docker CE (Docker)
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Install pip3 dependencies (Docker)
+  ansible.builtin.apt:
+    name:
+      - python3-pip
+    state: present
+    update_cache: true
+
+- name: Install docker python package (Docker)
+  ansible.builtin.pip:
+    name:
+      - docker
+
+- name: Add ubuntu user to the docker group (Docker)
+  ansible.builtin.user:
+    name: "ubuntu"
+    groups: docker
+    append: true
+
+- name: Reset ssh connection to apply user changes (Docker)
+  meta: reset_connection

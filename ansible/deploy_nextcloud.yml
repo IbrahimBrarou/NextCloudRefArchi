@@ -1,0 +1,13 @@
+---
+- name: Check OS requirements (System)
+  hosts: all
+  tasks:
+    - name: Check OS requirements (System)
+      assert:
+        that: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '22.04'
+        msg: "The required OS is Ubuntu, the supported version is 22.04. Detected {{ ansible_distribution }} <{{ ansible_distribution_version }}>!"
+  any_errors_fatal: true
+
+- hosts: all
+  roles:
+    - docker_install

@@ -8,7 +8,7 @@ variable "auth_data" {
   sensitive = true
 }
 
-variable "next_cloud" {
+variable "next_cloud_node" {
   type = object({
     name         = string
     flavor_name  = string
@@ -20,3 +20,26 @@ variable "next_cloud" {
   })
 }
 
+variable "redis_node" {
+  type = object({
+    name         = string
+    count        = number
+    flavor_name  = string
+    image_id     = string
+    key_pair     = string
+    volume_size  = number
+    network_name = string
+  })
+}
+
+variable "db_node" {
+  type = object({
+    name         = string
+    count        = number
+    flavor_name  = string
+    image_id     = string
+    key_pair     = string
+    volume_size  = number
+    network_name = string
+  })
+}

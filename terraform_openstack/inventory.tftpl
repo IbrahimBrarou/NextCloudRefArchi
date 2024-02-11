@@ -1,7 +1,11 @@
 # inventory.tftpl
 hosts:
-  ${master_name}:
-    ansible_host: ${master_ip}
+  nextcloud-server:
+    ansible_host: ${next_cloud_ip}
+  redis-server:
+    ansible_host: ${redis_ip}
+  mariadb-server:
+    ansible_host: ${maria_db_ip}
 
 vars:
   ansible_user: ubuntu

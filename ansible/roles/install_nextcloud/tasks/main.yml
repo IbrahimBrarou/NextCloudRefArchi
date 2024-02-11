@@ -1,0 +1,31 @@
+---
+- name: Install Apache and PHP
+  apt:
+    name:
+      - apache2
+      - php
+          - libapache2-mod-php
+    state: present
+  become: true
+
+
+- name: Download Nextcloud
+  get_url:
+    url: "https://download.nextcloud.com/server/releases/nextcloud-28.0.2.zip"
+    dest: "/tmp/nextcloud.zip"
+  become: true
+
+- name: Unzip Nextcloud
+  unarchive:
+    src: "/tmp/nextcloud.zip"
+    dest: "/var/www/"
+    remote_src: yes
+  become: true
+
+- name: Set permissions for Nextcloud
+  file:
+    path: "/var/www/nextcloud"
+    owner: www-data
+    group: www-data
+    recurse: yes
+  become: true

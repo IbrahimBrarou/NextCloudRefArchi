@@ -1,0 +1,27 @@
+- name: Install MariaDB
+  apt:
+    name: mariadb-server
+    state: present
+  become: true
+
+- name: Secure MariaDB installation
+  mysql_secure_installation:
+    login_user: root
+    login_password: "your_root_password_here"
+    new_password: "your_root_password_here"
+    validate_password: no
+  become: true
+
+- name: Create database and user for Nextcloud
+  mysql_db:
+    name: nextcloud
+    state: present
+  become: true
+
+- name: Create user for Nextcloud
+  mysql_user:
+    name: nextcloud
+    password: "your_nextcloud_password_here"
+    priv: 'nextcloud.*:ALL'
+    state: present
+  become: true

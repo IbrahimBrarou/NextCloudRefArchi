@@ -35,3 +35,15 @@ resource "openstack_compute_secgroup_v2" "ssh-public" {
     cidr        = "0.0.0.0/0"
   }
 }
+
+resource "openstack_compute_secgroup_v2" "http-public" {
+  name        = "http-public"
+  description = "Allow SSH (TCP/80) traffic from anywhere (0.0.0.0/0). Managed by terraform."
+
+  rule {
+    from_port   = 80
+    to_port     = 80
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}

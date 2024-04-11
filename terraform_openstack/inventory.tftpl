@@ -1,16 +1,17 @@
 # inventory.tftpl
-hosts:
-  nextcloud-server:
-    ansible_host: ${next_cloud_ip}
-  redis-server:
-    ansible_host: ${redis_ip}
-  mariadb-server:
-    ansible_host: ${maria_db_ip}
+NC:
+  hosts:
+    nextcloud-server:
+      ansible_host: ${next_cloud_ip}
+    mariadb-server:
+      ansible_host: ${maria_db_ip}
+    redis-server:
+      ansible_host: ${redis_ip}
 
-vars:
-  ansible_user: ubuntu
-  ansible_become: True
-  ansible_connection: ssh
-  ansible_become_method: sudo
-  ansible_python_interpreter: /usr/bin/python3
-  %{ if floating_ip != 0 }ansible_ssh_common_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ubuntu@${proxy_ip}"'%{ endif }
+  vars:
+    ansible_user: ubuntu
+    ansible_become: True
+    ansible_connection: ssh
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python3
+    %{ if floating_ip != 0 }ansible_ssh_common_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ubuntu@${proxy_ip}"'%{ endif }

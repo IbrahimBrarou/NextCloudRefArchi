@@ -1,5 +1,5 @@
 auth_data = ({
-  auth_url                      = "SET_YOUR_AUTH_URL"
-  application_credential_id     = "SET_YOUR_APPLICATION_CREDENTIAL_ID"
-  application_credential_secret = "SET_YOUR_APPLICATION_CREDENTIAL_SECRET"
+  auth_url                      = "https://sztaki.science-cloud.hu:5000"
+  application_credential_id     = "9117e5abfb534667b9e05295f4daba37"
+  application_credential_secret = "ibrahim"
 })

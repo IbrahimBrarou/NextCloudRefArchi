@@ -1,2 +1,0 @@
-nextcloud_db_host: "{{ hostvars['mariadb-server']['ansible_host'] }}"
-nextcloud_db_password: "your_nextcloud_db_password_here"

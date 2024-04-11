@@ -1,5 +1,5 @@
 - name: Install Redis
-  apt:
+  ansible.builtin.apt:
     name: redis-server
     state: present
   become: true

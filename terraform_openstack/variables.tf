@@ -20,10 +20,9 @@ variable "next_cloud_node" {
   })
 }
 
-variable "redis_node" {
+variable "db_node" {
   type = object({
     name         = string
-    count        = number
     flavor_name  = string
     image_id     = string
     key_pair     = string
@@ -32,10 +31,9 @@ variable "redis_node" {
   })
 }
 
-variable "db_node" {
+variable "redis_node" {
   type = object({
     name         = string
-    count        = number
     flavor_name  = string
     image_id     = string
     key_pair     = string

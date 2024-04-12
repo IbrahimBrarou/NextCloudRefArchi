@@ -1,4 +1,5 @@
 mariadb_host: "{{ hostvars['mariadb-server']['ansible_host'] }}"
 nextcloud_host: "{{ hostvars['nextcloud-server']['ansible_host'] }}"
+redis_host: "{{ hostvars['redis-server']['ansible_host'] }}"
 
 mariadb_password: "ibrahim"

@@ -20,6 +20,7 @@
       - php-mysql
       - php-zip
       - php-xml
+      - php-redis
     state: present
     update_cache: yes
   become: true
@@ -69,7 +70,7 @@
 - name: Install Nextcloud and configure database
   ansible.builtin.shell: | 
             cd /var/www/html
-            sudo -u www-data php occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name nextcloud --database-user nextclouduser --database-pass {{ mariadb_password }} --admin-user admin --admin-pass admin123
+            sudo -u www-data php occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name nextcloud --database-user nextclouduser --database-pass {{ mariadb_password }} --admin-user admin2 --admin-pass admin2123
   become: true
 
 - name: Update trusted domains in Nextcloud configuration
@@ -77,5 +78,38 @@
     path: /var/www/html/config/config.php
     line: "    1 => '193.225.250.156'"
     insertafter: "    0 => 'localhost',"
-  notify:
-        - Restart Apache service
+  notify: Restart Apache service
+
+- name: Configuring Redis for nextcloud
+  ansible.builtin.lineinfile:
+    path: /var/www/html/config/config.php
+    insertafter: '\$CONFIG = array \('
+    line: |
+      'memcache.local' => '\OC\Memcache\APCu',
+      'memcache.distributed' => '\OC\Memcache\Redis',
+      'memcache.locking' => '\OC\Memcache\Redis',
+      'redis' => array(
+          'host' => '{{ redis_host }}',
+          'port' => 6379,
+      ),
+  notify: Restart Apache service
+
+- name: Disable output buffering
+  ansible.builtin.lineinfile:
+    path: /etc/php/8.1/apache2/php.ini
+    regexp: '^output_buffering'
+    line: 'output_buffering = Off'
+  notify: Restart Redis service
+
+- name: Set time for maintenance window for 1am
+  ansible.builtin.shell: |
+            cd /var/www/html 
+            sudo -u www-data php --define apc.enable_cli=1 occ config:system:set maintenance_window_start --type=integer --value=1
+  become: true
+
+- name: Increase PHP memory limit
+  ansible.builtin.lineinfile:
+    path: /etc/php/8.1/apache2/php.ini
+    regexp: '^memory_limit'
+    line: 'memory_limit = 512M'
+  notify: Restart Redis service

@@ -13,11 +13,10 @@
 #  roles:
 #    - install_mariadb
 
+#- hosts: redis-server
+#  roles:
+#   - install_redis
+
 - hosts: nextcloud-server
   roles:
     - install_nextcloud
-
-
-#- hosts: redis-server
-#  roles:
-#    - install_redis

@@ -2,4 +2,12 @@
   ansible.builtin.apt:
     name: redis-server
     state: present
+    update-cache: yes
   become: true
+
+- name: Modify Redis configuration
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^bind'
+    line: 'bind 0.0.0.0'
+  notify: Restart Redis service

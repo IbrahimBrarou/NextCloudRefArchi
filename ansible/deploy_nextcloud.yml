@@ -8,15 +8,18 @@
         msg: "The required OS is Ubuntu, the supported version is 22.04. Detected {{ ansible_distribution }} <{{ ansible_distribution_version }}>!"
   any_errors_fatal: true
 
-
 #- hosts: mariadb-server
 #  roles:
 #    - install_mariadb
 
-#- hosts: redis-server
-#  roles:
-#   - install_redis
-
-- hosts: nextcloud-server
+- hosts: redis-server
   roles:
-    - install_nextcloud
+   - install_redis
+
+#- hosts: nextcloud-server
+#  roles:
+#    - install_nextcloud
+
+#- hosts: grafana-server
+#  roles:
+#   - install_grafana

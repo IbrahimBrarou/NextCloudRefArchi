@@ -47,3 +47,16 @@ resource "openstack_compute_secgroup_v2" "http-public" {
     cidr        = "0.0.0.0/0"
   }
 }
+
+resource "openstack_compute_secgroup_v2" "tcp3000-public" {
+  name        = "tcp3000-public"
+  description = "Allow access to port (TCP/3000) traffic from anywhere (0.0.0.0/0). Managed by terraform."
+
+  rule {
+    from_port   = 3000
+    to_port     = 3000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+

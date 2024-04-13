@@ -41,3 +41,14 @@ variable "redis_node" {
     network_name = string
   })
 }
+
+variable "grafana_node" {
+  type = object({
+    name         = string
+    flavor_name  = string
+    image_id     = string
+    key_pair     = string
+    volume_size  = number
+    network_name = string
+  })
+}

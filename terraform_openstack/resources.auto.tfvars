@@ -25,3 +25,12 @@ redis_node = ({
   network_name = "default"
   volume_size  = 20
 })
+
+grafana_node = ({
+  flavor_name  = "m2.medium"
+  image_id     = "d6bf6eac-2e0b-49a4-a280-026bf661bf30"
+  key_pair     = "id_rsa"
+  name         = "grafana"
+  network_name = "default"
+  volume_size  = 20
+})

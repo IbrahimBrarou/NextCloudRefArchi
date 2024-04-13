@@ -7,6 +7,8 @@ NC:
       ansible_host: ${maria_db_ip}
     redis-server:
       ansible_host: ${redis_ip}
+    grafana-server:
+      ansible_host: ${grafana_ip}
 
   vars:
     ansible_user: ubuntu

@@ -1,0 +1,41 @@
+---
+- name: Install prerequisites
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - software-properties-common
+    - wget
+  become: true
+
+- name: Download Grafana GPG key
+  get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.key
+  become: true
+
+- name: Add Grafana repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.key] https://apt.grafana.com stable main"
+    state: present
+  become: true
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install Grafana
+  apt:
+    name: grafana
+    state: present
+  become: true
+
+- name: Configure Grafana to listen on port 3000
+  lineinfile:
+      path: /etc/grafana/grafana.ini
+      regexp: '^;http_port = 3000$'
+      line: 'http_port = 3000'
+      state: present
+  notify: Restart grafana-server

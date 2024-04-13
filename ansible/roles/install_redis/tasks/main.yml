@@ -1,3 +1,4 @@
+---
 - name: Install Redis
   ansible.builtin.apt:
     name: redis-server
@@ -11,3 +12,11 @@
     regexp: '^bind'
     line: 'bind 0.0.0.0'
   notify: Restart Redis service
+
+- name: Include Prometheus setup
+  include_role:
+    name: install_prometheus
+
+- name: Include node_exporter setup
+  include_role:
+    name: install_node_exporter

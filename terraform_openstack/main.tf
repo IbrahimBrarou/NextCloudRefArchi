@@ -8,13 +8,6 @@ terraform {
 }
 
 # Configure the OpenStack Provider, the cloud itself where it will be provisioned
-provider "openstack" {
-  auth_url                      = var.auth_data.auth_url
-  application_credential_id     = var.auth_data.application_credential_id
-  application_credential_secret = var.auth_data.application_credential_secret
-  # If your cloud provider uses self-signed cert, use the insecure flag
-  # insecure = true
-}
 
 # resource specific configuration
 resource "openstack_compute_instance_v2" "next-cloud" {
@@ -86,7 +79,31 @@ resource "openstack_compute_instance_v2" "redis" {
   network {
     name = var.redis_node.network_name
   }
-} 
+}
+
+resource "openstack_compute_instance_v2" "grafana" {
+  name        = var.grafana_node.name
+  flavor_name = var.grafana_node.flavor_name
+  key_pair    = var.grafana_node.key_pair
+  security_groups = [
+    "${openstack_compute_secgroup_v2.all-open-local.id}",
+    "${openstack_compute_secgroup_v2.ssh-public.id}",
+    "${openstack_compute_secgroup_v2.tcp3000-public.id}",
+  ]
+
+  block_device {
+    uuid                  = var.grafana_node.image_id
+    source_type           = "image"
+    destination_type      = "volume"
+    boot_index            = 0
+    delete_on_termination = true
+    volume_size           = var.grafana_node.volume_size
+  }
+
+  network {
+    name = var.grafana_node.network_name
+  }
+}
 
 # Associate floating IP to the Master node.
 resource "openstack_compute_floatingip_associate_v2" "fip_1" {
@@ -102,6 +119,7 @@ resource "local_file" "ansible_inventory" {
     next_cloud_ip   = openstack_compute_instance_v2.next-cloud.network[0].fixed_ip_v4
     maria_db_ip   = openstack_compute_instance_v2.maria-db.network[0].fixed_ip_v4
     redis_ip = openstack_compute_instance_v2.redis.network[0].fixed_ip_v4
+    grafana_ip = openstack_compute_instance_v2.grafana.network[0].fixed_ip_v4
     }
   )
   filename = "../ansible/hosts.yml"

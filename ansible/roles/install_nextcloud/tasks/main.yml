@@ -99,7 +99,7 @@
     path: /etc/php/8.1/apache2/php.ini
     regexp: '^output_buffering'
     line: 'output_buffering = Off'
-  notify: Restart Redis service
+  notify: Restart Apache service
 
 - name: Set time for maintenance window for 1am
   ansible.builtin.shell: |
@@ -112,4 +112,4 @@
     path: /etc/php/8.1/apache2/php.ini
     regexp: '^memory_limit'
     line: 'memory_limit = 512M'
-  notify: Restart Redis service
+  notify: Restart Apache service

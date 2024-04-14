@@ -1,4 +1,4 @@
 - name: Restart prometheus service
   ansible.builtin.service:
-      name: redis-server
+      name: prometheus
       state: restarted

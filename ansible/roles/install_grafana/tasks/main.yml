@@ -1,6 +1,6 @@
 ---
 - name: Install prerequisites
-  apt:
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: present
   loop:
@@ -10,32 +10,135 @@
   become: true
 
 - name: Download Grafana GPG key
-  get_url:
+  ansible.builtin.get_url:
     url: https://apt.grafana.com/gpg.key
     dest: /etc/apt/keyrings/grafana.key
   become: true
 
 - name: Add Grafana repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/grafana.key] https://apt.grafana.com stable main"
     state: present
   become: true
 
 - name: Update apt cache
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
   become: true
 
 - name: Install Grafana
-  apt:
+  ansible.builtin.apt:
     name: grafana
     state: present
   become: true
 
 - name: Configure Grafana to listen on port 3000
-  lineinfile:
-      path: /etc/grafana/grafana.ini
-      regexp: '^;http_port = 3000$'
-      line: 'http_port = 3000'
-      state: present
+  ansible.builtin.lineinfile:
+    path: /etc/grafana/grafana.ini
+    regexp: "^;http_port = 3000$"
+    line: "http_port = 3000"
+    state: present
   notify: Restart grafana-server
+
+- name: Download dashboard JSON file
+  ansible.builtin.get_url:
+    url: "https://grafana.com/api/dashboards/1860/revisions/36/download"
+    dest: "/tmp/dashboard.json"
+
+- name: Load dashboard JSON
+  ansible.builtin.slurp:
+    src: "/tmp/dashboard.json"
+  register: dashboard_json
+
+- name: Configure datasource for Redis
+  ansible.builtin.uri:
+    url: http://{{grafana_host}}:3000/api/datasources
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body: '{"name":"redis","type":"prometheus","url":"http://{{redis_host}}:9090","access":"proxy"}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  register: redis_datasource_result
+
+- name: Create dashboard for Redis datasource
+  ansible.builtin.uri:
+    url: "http://{{grafana_host}}:3000/api/dashboards/db"
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body:
+      '{"dashboard": {"title": "Redis",{% for key, value in (dashboard_json.content | b64decode | from_json).items() if key != "title" %}
+      "{{ key }}": {{ value | to_json }},
+      {% endfor %}} ,"overwrite": true,"inputs": [{"name": "redis","type": "datasource","pluginId": "prometheus","value": "{{ redis_datasource_result.json.id }}"}]}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  vars:
+    dashboard_result: "{{ dashboard_result }}"
+    redis_datasource_result: "{{ redis_datasource_result }}"
+
+- name: Configure datasource for NextCloud
+  ansible.builtin.uri:
+    url: http://{{grafana_host}}:3000/api/datasources
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body: '{"name":"nextcloud","type":"prometheus","url":"http://{{nextcloud_host}}:9090","access":"proxy","isDefault":true}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  register: nextcloud_datasource_result
+
+- name: Create dashboard for Nextcloud datasource
+  ansible.builtin.uri:
+    url: "http://{{grafana_host}}:3000/api/dashboards/db"
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body:
+      '{"dashboard": {"title": "Nextcloud",{% for key, value in (dashboard_json.content | b64decode | from_json).items() if key != "title" %}
+      "{{ key }}": {{ value | to_json }},
+      {% endfor %}} ,"overwrite": true,"inputs": [{"name": "nextcloud","type": "datasource","pluginId": "prometheus","value": "{{ nextcloud_datasource_result.json.id }}"}]}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  vars:
+    dashboard_result: "{{ dashboard_result }}"
+    nextcloud_datasource_result: "{{ nextcloud_datasource_result }}"
+
+- name: Configure datasource for Mariadb
+  ansible.builtin.uri:
+    url: http://{{grafana_host}}:3000/api/datasources
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body: '{"name":"mariadb","type":"prometheus","url":"http://{{mariadb_host}}:9090","access":"proxy"}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  register: mariadb_datasource_result
+
+- name: Create dashboard for Mariadb datasource
+  ansible.builtin.uri:
+    url: "http://{{grafana_host}}:3000/api/dashboards/db"
+    method: POST
+    user: admin
+    password: admin
+    body_format: json
+    body:
+      '{"dashboard": {"title": "Mariadb",{% for key, value in (dashboard_json.content | b64decode | from_json).items() if key != "title" %}
+      "{{ key }}": {{ value | to_json }},
+      {% endfor %}} ,"overwrite": true,"inputs": [{"name": "mariadb","type": "datasource","pluginId": "prometheus","value": "{{ mariadb_datasource_result.json.id }}"}]}'
+    status_code: 200
+    force_basic_auth: true
+    validate_certs: no
+  vars:
+    dashboard_result: "{{ dashboard_result }}"
+    mariadb_datasource_result: "{{ mariadb_datasource_result }}"

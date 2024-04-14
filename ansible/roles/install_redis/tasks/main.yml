@@ -20,3 +20,11 @@
 - name: Include node_exporter setup
   include_role:
     name: install_node_exporter
+
+- name: Add job to Prometheus configuration
+  lineinfile:
+      path: "/etc/prometheus/prometheus.yml"
+      line: "  - job_name: 'remote_collector'\n  scrape_interval: 10s\n  static_configs:\n    - targets: ['192.168.0.37:9100']"
+      insertafter: EOF
+      state: present
+  notify: Restart prometheus service

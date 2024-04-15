@@ -25,11 +25,11 @@
     update_cache: yes
   become: true
   notify:
-        - Restart Apache service
+    - Restart Apache service
 
 - name: Download Nextcloud
   ansible.builtin.get_url:
-    url: "https://download.nextcloud.com/server/releases/nextcloud-28.0.4.zip"
+    url: "https://download.nextcloud.com/server/releases/{{nextcloud_version}}.zip"
     dest: "/tmp/nextcloud.zip"
   become: true
 
@@ -63,18 +63,32 @@
     - env
     - dir
     - mime
+    - ssl
   become: true
   notify:
-        - Restart Apache service
+    - Restart Apache service
+
+- name: Create Nextcloud data directory
+  ansible.builtin.file:
+    path: /var/nextcloud_data
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0700"
+
+- name: Include default vars from Mariadb role
+  ansible.builtin.include_vars:
+    file: ../../install_mariadb/defaults/main.yml
+    name: mariadb_defaults_vars
 
 - name: Install Nextcloud and configure database
-  ansible.builtin.shell: | 
-            cd /var/www/html
-            sudo -u www-data php occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name nextcloud --database-user nextclouduser --database-pass {{ mariadb_password }} --admin-user admin2 --admin-pass admin2123
+  ansible.builtin.shell: |
+    cd /var/www/html
+    sudo -u www-data php occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name {{ mariadb_defaults_vars.nextcloud_database_name }} --data-dir {{ nextcloud_data_dir }} --database-user {{ mariadb_defaults_vars.nextcloud_database_user }} --database-pass {{ mariadb_defaults_vars.nextcloud_database_password }} --admin-user {{ nextcloud_user }} --admin-pass {{ nextcloud_pass }}
   become: true
 
 - name: Update trusted domains in Nextcloud configuration
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /var/www/html/config/config.php
     line: "    1 => '193.225.250.156'"
     insertafter: "    0 => 'localhost',"
@@ -97,19 +111,41 @@
 - name: Disable output buffering
   ansible.builtin.lineinfile:
     path: /etc/php/8.1/apache2/php.ini
-    regexp: '^output_buffering'
-    line: 'output_buffering = Off'
+    regexp: "^output_buffering"
+    line: "output_buffering = Off"
   notify: Restart Apache service
 
 - name: Set time for maintenance window for 1am
   ansible.builtin.shell: |
-            cd /var/www/html 
-            sudo -u www-data php --define apc.enable_cli=1 occ config:system:set maintenance_window_start --type=integer --value=1
+    cd /var/www/html 
+    sudo -u www-data php --define apc.enable_cli=1 occ config:system:set maintenance_window_start --type=integer --value=1
   become: true
 
 - name: Increase PHP memory limit
   ansible.builtin.lineinfile:
     path: /etc/php/8.1/apache2/php.ini
-    regexp: '^memory_limit'
-    line: 'memory_limit = 512M'
+    regexp: "^memory_limit"
+    line: "memory_limit = 512M"
   notify: Restart Apache service
+
+#- name: Restrict access to data directory
+#  ansible.builtin.template:
+#    src: apache2.conf.j2
+#    dest: /etc/apache2/apache2.conf
+#  notify: Restart Apache service
+
+- name: Include Prometheus setup
+  include_role:
+    name: install_prometheus
+
+- name: Include node_exporter setup
+  include_role:
+    name: install_node_exporter
+
+- name: Add job to Prometheus configuration
+  ansible.builtin.lineinfile:
+    path: "/etc/prometheus/prometheus.yml"
+    line: "  - job_name: 'remote_collector'\n  scrape_interval: 10s\n  static_configs:\n    - targets: ['{{nextcloud_host}}:9100']"
+    insertafter: EOF
+    state: present
+  notify: Restart prometheus service

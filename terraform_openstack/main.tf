@@ -7,8 +7,6 @@ terraform {
   }
 }
 
-# Configure the OpenStack Provider, the cloud itself where it will be provisioned
-
 # resource specific configuration
 resource "openstack_compute_instance_v2" "next-cloud" {
   name        = var.next_cloud_node.name

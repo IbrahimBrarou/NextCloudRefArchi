@@ -1,7 +1,7 @@
 ---
 - name: Download Prometheus
   ansible.builtin.get_url:
-      url: "https://github.com/prometheus/prometheus/releases/download/v2.37.6/prometheus-2.37.6.linux-amd64.tar.gz"
+      url: "https://github.com/prometheus/prometheus/releases/download/v{{prometheus_version}}/prometheus-{{prometheus_version}}.linux-amd64.tar.gz"
       dest: "/tmp/prometheus.tar.gz"
 
 - name: Extract Prometheus
@@ -27,7 +27,7 @@
       - "/var/lib/prometheus"
 
 - name: Move Prometheus binaries and config
-  ansible.builtin.command: "mv /tmp/prometheus-2.37.6.linux-amd64/{{ item.src }} {{ item.dest }}"
+  ansible.builtin.command: "mv /tmp/prometheus-{{prometheus_version}}.linux-amd64/{{ item.src }} {{ item.dest }}"
   args:
       creates: "{{ item.dest }}/{{ item.src }}"
   loop:
@@ -52,7 +52,7 @@
       - "/etc/prometheus"
       - "/var/lib/prometheus"
 
-- name: Make node_exporter a service
+- name: Make prometheus a service
   ansible.builtin.template:
     src: prometheus.conf.j2
     dest: /etc/systemd/system/prometheus.service

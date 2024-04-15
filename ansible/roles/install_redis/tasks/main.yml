@@ -1,7 +1,7 @@
 ---
 - name: Install Redis
   ansible.builtin.apt:
-    name: redis-server
+    name: redis-server={{redis_version}}
     state: present
     update-cache: yes
   become: true
@@ -9,8 +9,14 @@
 - name: Modify Redis configuration
   ansible.builtin.lineinfile:
     path: /etc/redis/redis.conf
-    regexp: '^bind'
-    line: 'bind 0.0.0.0'
+    regexp: "^bind"
+    line: "bind 0.0.0.0"
+  notify: Restart Redis service
+
+- name: Enable Redis service
+  ansible.builtin.service:
+    name: redis-server
+    enabled: yes
   notify: Restart Redis service
 
 - name: Include Prometheus setup
@@ -22,9 +28,9 @@
     name: install_node_exporter
 
 - name: Add job to Prometheus configuration
-  lineinfile:
-      path: "/etc/prometheus/prometheus.yml"
-      line: "  - job_name: 'remote_collector'\n  scrape_interval: 10s\n  static_configs:\n    - targets: ['192.168.0.37:9100']"
-      insertafter: EOF
-      state: present
+  ansible.builtin.lineinfile:
+    path: "/etc/prometheus/prometheus.yml"
+    line: "  - job_name: 'remote_collector'\n  scrape_interval: 10s\n  static_configs:\n    - targets: ['{{redis_host}}:9100']"
+    insertafter: EOF
+    state: present
   notify: Restart prometheus service

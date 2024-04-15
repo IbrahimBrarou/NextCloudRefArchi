@@ -1,0 +1,8 @@
+---
+grafana_version: '10.4.2'
+node_exporter_dashboard_id: '1860'
+redis_datasource_name: 'redis'
+mariadb_datasource_name: 'mariadb'
+nextcloud_datasource_name: 'nextcloud'
+grafana_user: 'admin'
+grafana_pass: 'admin'

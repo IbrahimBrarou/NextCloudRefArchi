@@ -1,7 +1,7 @@
 ---
 - name: Download Node Exporter
   ansible.builtin.get_url:
-    url: "https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz"
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{node_exporter_version}}/node_exporter-{{node_exporter_version}}.linux-amd64.tar.gz"
     dest: "/tmp/node_exporter.tar.gz"
 
 - name: Extract Node Exporter
@@ -11,7 +11,7 @@
     remote_src: yes
 
 - name: Move Node Exporter binary to /usr/local/bin
-  ansible.builtin.command: "mv /tmp/node_exporter-1.5.0.linux-amd64/node_exporter /usr/local/bin"
+  ansible.builtin.command: "mv /tmp/node_exporter-{{node_exporter_version}}.linux-amd64/node_exporter /usr/local/bin"
   args:
     creates: "/usr/local/bin/node_exporter"
 

@@ -1,4 +1,4 @@
 - name: Restart node_exporter service
   ansible.builtin.service:
-      name: redis-server
-      state: restarted
+    name: node_exporter
+    state: restarted

@@ -1,0 +1,4 @@
+nextcloud_version: 'nextcloud-28.0.4'
+nextcloud_data_dir: '/var/nextcloud_data'
+nextcloud_user: 'admin'
+nextcloud_pass: 'admin123'

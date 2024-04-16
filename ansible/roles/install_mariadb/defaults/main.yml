@@ -1,5 +1,5 @@
 ---
-mariadb_version: '10.6.16-MariaDB-0ubuntu0.22.04.1'
+mariadb_version: '1:10.6.16-0ubuntu0.22.04.1'
 nextcloud_database_name: 'nextcloud'
 nextcloud_database_password: 'nextcloud'
 nextcloud_database_user: 'nextclouduser'

@@ -21,6 +21,7 @@
       - php-zip
       - php-xml
       - php-redis
+      - libmagickcore-6.q16-6-extra
     state: present
     update_cache: yes
   become: true
@@ -106,14 +107,12 @@
           'host' => '{{ redis_host }}',
           'port' => 6379,
       ),
-  notify: Restart Apache service
 
 - name: Disable output buffering
   ansible.builtin.lineinfile:
     path: /etc/php/8.1/apache2/php.ini
     regexp: "^output_buffering"
     line: "output_buffering = Off"
-  notify: Restart Apache service
 
 - name: Set time for maintenance window for 1am
   ansible.builtin.shell: |
@@ -126,13 +125,19 @@
     path: /etc/php/8.1/apache2/php.ini
     regexp: "^memory_limit"
     line: "memory_limit = 512M"
+
+- name: Configuring Hungary as Phone Region for nextcloud
+  ansible.builtin.lineinfile:
+    path: /var/www/html/config/config.php
+    insertafter: '\$CONFIG = array \('
+    line: "    'default_phone_region' => '{{ phone_region }}',"
   notify: Restart Apache service
 
-#- name: Restrict access to data directory
-#  ansible.builtin.template:
-#    src: apache2.conf.j2
-#    dest: /etc/apache2/apache2.conf
-#  notify: Restart Apache service
+- name: Restrict access to data directory
+  ansible.builtin.template:
+    src: apache2.conf.j2
+    dest: /etc/apache2/apache2.conf
+  notify: Restart Apache service
 
 - name: Include Prometheus setup
   include_role:
@@ -143,9 +148,15 @@
     name: install_node_exporter
 
 - name: Add job to Prometheus configuration
-  ansible.builtin.lineinfile:
+  ansible.builtin.blockinfile:
     path: "/etc/prometheus/prometheus.yml"
-    line: "  - job_name: 'remote_collector'\n  scrape_interval: 10s\n  static_configs:\n    - targets: ['{{nextcloud_host}}:9100']"
+    block: |
+      {% filter indent(width=2, first=true) %}
+      - job_name: 'remote_collector'
+        scrape_interval: 10s
+        static_configs:
+          - targets: ['{{nextcloud_host}}:9100']
+      {% endfilter %}
     insertafter: EOF
     state: present
   notify: Restart prometheus service

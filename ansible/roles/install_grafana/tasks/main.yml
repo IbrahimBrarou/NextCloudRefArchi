@@ -43,6 +43,7 @@
 - name: Enable Grafana service
   ansible.builtin.service:
       name: grafana-server
+      state: started
       enabled: yes
   notify: Restart grafana-server
 

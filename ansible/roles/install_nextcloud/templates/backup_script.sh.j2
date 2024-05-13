@@ -1,0 +1,25 @@
+#!/bin/bash
+
+nextcloud_data_dir="{{ nextcloud_data_dir }}"
+nextcloud_backup_dest="{{ nextcloud_backup_dest }}"
+archive_period={{ backup_archive_period }}
+exclude_trashbinfiles="{{ backup_exclude_trashbinfiles }}"
+
+# Enabling maintenance mode
+sudo -u www-data php --define apc.enable_cli=1  /var/www/html/occ maintenance:mode --on
+
+# Create backup destination directory if it doesn't exist
+sudo mkdir -p $nextcloud_backup_dest/backup
+
+# Backup Nextcloud data directory to destination, optionally excluding log files
+if [ -n $exclude_trashbinfiles ]; then
+    rsync -Aavx --delete --exclude='files_trashbin/' $nextcloud_data_dir/ $nextcloud_backup_dest/backup/nextcloud-dirbkp_$(date +"%Y%m%d")/
+else
+    rsync -Aavx --delete $nextcloud_data_dir/ $nextcloud_backup_dest/backup/nextcloud-dirbkp_$(date +"%Y%m%d")/
+fi
+
+# Disabling maintenance mode
+sudo -u www-data php --define apc.enable_cli=1 /var/www/html/occ maintenance:mode --off
+
+# Rotation logic -- keep only backup of last archive_period days
+find $nextcloud_backup_dest/backup/nextcloud-dirbkp_* -type d -mtime +$archive_period -exec rm -rf {} +

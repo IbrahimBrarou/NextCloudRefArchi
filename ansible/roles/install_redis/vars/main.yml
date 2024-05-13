@@ -1,1 +1,2 @@
 redis_host: "{{ hostvars['redis-server']['ansible_host'] }}"
+enable_grafana: "{{ hostvars['redis-server']['enable_grafana'] }}"

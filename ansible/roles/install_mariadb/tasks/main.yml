@@ -17,7 +17,7 @@
     update_cache: yes
   become: true
 
-- name: secure mariadb
+- name: Mariadb security measures
   ansible.builtin.expect:
     command: mysql_secure_installation
     responses:
@@ -28,8 +28,8 @@
       "Remove test database": "y"
       "Reload privilege tables now": "y"
     timeout: 1
-  register: secure_mariadb
-  failed_when: "'... Failed!' in secure_mariadb.stdout_lines"
+  register: mariadb_security
+  failed_when: "'... Failed!' in mariadb_security.stdout_lines"
   become: true
 
 - name: Create Nextcloud Database
@@ -58,17 +58,21 @@
 
 - name: Enable Mariadb service
   ansible.builtin.service:
-      name: mariadb
-      enabled: yes
-  notify: Restart mariadb-server service
+    name: mariadb
+    enabled: yes
+  become: true
+  notify:
+    - Restart mariadb-server service
 
 - name: Include Prometheus setup
   include_role:
     name: install_prometheus
+  when: enable_grafana
 
 - name: Include node_exporter setup
   include_role:
     name: install_node_exporter
+  when: enable_grafana
 
 - name: Add job to Prometheus configuration
   ansible.builtin.blockinfile:
@@ -83,3 +87,29 @@
     insertafter: EOF
     state: present
   notify: Restart prometheus service
+  when: enable_grafana
+
+- name: Grant privileges to the host for db backup
+  ansible.builtin.mysql_user:
+    name: "{{ nextcloud_database_user }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    password: "{{ nextcloud_database_password }}"
+    priv: "*.*:ALL"
+    host: "{{ mariadb_host }}"
+    state: present
+  become: true
+  notify:
+    - Restart mariadb-server service
+
+- name: Add a backup script
+  ansible.builtin.template:
+    src: backup_script.sh.j2
+    dest: /root/backup_script.sh
+    mode: "700"
+
+- name: Run backups at a specific time everyday
+  ansible.builtin.cron:
+    name: "backup cronjob"
+    minute: "{{ backup_minute }}"
+    hour: "{{ backup_hour }}"
+    job: "/root/backup_script.sh"

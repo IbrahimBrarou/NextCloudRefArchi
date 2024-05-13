@@ -1,5 +1,12 @@
-nextcloud_version: 'nextcloud-28.0.4'
+nextcloud_version: 'latest-28'
 nextcloud_data_dir: '/var/nextcloud_data'
+nextcloud_backup_dest: '/home/'
+backup_archive_period: 5
+backup_exclude_trashbinfiles: true
 nextcloud_user: 'admin'
 nextcloud_pass: 'admin123'
 phone_region: 'HU'
+backup_hour: "02"
+backup_minute: "00"
+maintenance_window_time: 1 # means 1 am
+php_memory_limit: "512M"

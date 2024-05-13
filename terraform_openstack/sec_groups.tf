@@ -36,25 +36,25 @@ resource "openstack_compute_secgroup_v2" "ssh-public" {
   }
 }
 
-resource "openstack_compute_secgroup_v2" "http-public" {
-  name        = "http-public"
-  description = "Allow SSH (TCP/80) traffic from anywhere (0.0.0.0/0). Managed by terraform."
-
-  rule {
-    from_port   = 80
-    to_port     = 80
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-}
-
-resource "openstack_compute_secgroup_v2" "tcp3000-public" {
-  name        = "tcp3000-public"
+resource "openstack_compute_secgroup_v2" "grafana-public" {
+  name        = "grafana-public"
   description = "Allow access to port (TCP/3000) traffic from anywhere (0.0.0.0/0). Managed by terraform."
 
   rule {
     from_port   = 3000
     to_port     = 3000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+
+resource "openstack_compute_secgroup_v2" "https-public" {
+  name        = "http-public"
+  description = "Allow SSH (TCP/80) traffic from anywhere (0.0.0.0/0). Managed by terraform."
+
+  rule {
+    from_port   = 443
+    to_port     = 443
     ip_protocol = "tcp"
     cidr        = "0.0.0.0/0"
   }

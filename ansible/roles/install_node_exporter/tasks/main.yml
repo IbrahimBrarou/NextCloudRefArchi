@@ -33,4 +33,5 @@
   ansible.builtin.service:
     name: "node_exporter"
     enabled: yes
+  become: true
   notify: Restart node_exporter service

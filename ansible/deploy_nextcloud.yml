@@ -22,4 +22,4 @@
 
 - hosts: grafana-server
   roles:
-    - install_grafana
+    - { role: install_grafana, when: enable_grafana }

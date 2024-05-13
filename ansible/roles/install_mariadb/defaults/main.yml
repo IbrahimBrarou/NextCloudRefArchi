@@ -1,5 +1,10 @@
 ---
 mariadb_version: '1:10.6.16-0ubuntu0.22.04.1'
+mariadb_host: 'mariadb.elkhcloud'
 nextcloud_database_name: 'nextcloud'
 nextcloud_database_password: 'nextcloud'
 nextcloud_database_user: 'nextclouduser'
+backup_dest_dir: '/home/backup/'
+backup_archive_period: 5
+backup_hour: "02"
+backup_minute: "00"

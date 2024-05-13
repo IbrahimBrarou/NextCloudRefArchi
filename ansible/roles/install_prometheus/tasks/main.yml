@@ -64,4 +64,5 @@
   ansible.builtin.service:
       name: "prometheus"
       enabled: yes
+  become: true
   notify: Restart prometheus service

@@ -66,6 +66,10 @@
     - mime
     - ssl
   become: true
+
+- name: Enable nextcloud SSL site
+  ansible.builtin.command: a2ensite default-ssl
+  become: true
   notify:
     - Restart Apache service
 
@@ -83,15 +87,13 @@
     name: mariadb_defaults_vars
 
 - name: Install Nextcloud and configure database
-  ansible.builtin.shell: |
-    cd /var/www/html
-    sudo -u www-data php occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name {{ mariadb_defaults_vars.nextcloud_database_name }} --data-dir {{ nextcloud_data_dir }} --database-user {{ mariadb_defaults_vars.nextcloud_database_user }} --database-pass {{ mariadb_defaults_vars.nextcloud_database_password }} --admin-user {{ nextcloud_user }} --admin-pass {{ nextcloud_pass }}
+  ansible.builtin.shell: sudo -u www-data php /var/www/html/occ maintenance:install --database mysql --database-host {{ mariadb_host }} --database-port 3306 --database-name {{ mariadb_defaults_vars.nextcloud_database_name }} --data-dir {{ nextcloud_data_dir }} --database-user {{ mariadb_defaults_vars.nextcloud_database_user }} --database-pass {{ mariadb_defaults_vars.nextcloud_database_password }} --admin-user {{ nextcloud_user }} --admin-pass {{ nextcloud_pass }}
   become: true
 
 - name: Update trusted domains in Nextcloud configuration
   ansible.builtin.lineinfile:
     path: /var/www/html/config/config.php
-    line: "    1 => '193.225.250.156'"
+    line: "    1 => '{{nextcloud_public_ip}}'"
     insertafter: "    0 => 'localhost',"
   notify: Restart Apache service
 
@@ -114,23 +116,21 @@
     regexp: "^output_buffering"
     line: "output_buffering = Off"
 
-- name: Set time for maintenance window for 1am
-  ansible.builtin.shell: |
-    cd /var/www/html 
-    sudo -u www-data php --define apc.enable_cli=1 occ config:system:set maintenance_window_start --type=integer --value=1
+- name: Set time for maintenance window, by default 1 am
+  ansible.builtin.shell: sudo -u www-data php --define apc.enable_cli=1 /var/www/html/occ config:system:set maintenance_window_start --type=integer --value={{ maintenance_window_time }}
   become: true
 
 - name: Increase PHP memory limit
   ansible.builtin.lineinfile:
     path: /etc/php/8.1/apache2/php.ini
     regexp: "^memory_limit"
-    line: "memory_limit = 512M"
+    line: "memory_limit = {{ php_memory_limit }}"
 
 - name: Configuring Hungary as Phone Region for nextcloud
   ansible.builtin.lineinfile:
     path: /var/www/html/config/config.php
     insertafter: '\$CONFIG = array \('
-    line: "    'default_phone_region' => '{{ phone_region }}',"
+    line: "  'default_phone_region' => '{{ phone_region }}',"
   notify: Restart Apache service
 
 - name: Restrict access to data directory
@@ -142,10 +142,12 @@
 - name: Include Prometheus setup
   include_role:
     name: install_prometheus
+  when: enable_grafana
 
 - name: Include node_exporter setup
   include_role:
     name: install_node_exporter
+  when: enable_grafana
 
 - name: Add job to Prometheus configuration
   ansible.builtin.blockinfile:
@@ -160,3 +162,17 @@
     insertafter: EOF
     state: present
   notify: Restart prometheus service
+  when: enable_grafana
+
+- name: Add a backup script to backup Data dir
+  ansible.builtin.template:
+    src: backup_script.sh.j2
+    dest: /root/backup_script.sh
+    mode: '700'
+
+- name: Run backups at 2 am everyday
+  ansible.builtin.cron:
+    name: "backup cronjob"
+    minute: "{{ backup_minute }}"
+    hour: "{{ backup_hour }}"
+    job: "/root/backup_script.sh"

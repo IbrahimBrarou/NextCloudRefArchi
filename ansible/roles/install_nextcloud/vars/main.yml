@@ -1,3 +1,5 @@
 mariadb_host: "{{ hostvars['mariadb-server']['ansible_host'] }}"
 nextcloud_host: "{{ hostvars['nextcloud-server']['ansible_host'] }}"
 redis_host: "{{ hostvars['redis-server']['ansible_host'] }}"
+enable_grafana: "{{ hostvars['nextcloud-server']['enable_grafana'] }}"
+nextcloud_public_ip: "{{ hostvars['nextcloud-server']['nextcloud_public_ip'] }}"

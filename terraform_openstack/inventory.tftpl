@@ -7,8 +7,10 @@ NC:
       ansible_host: ${maria_db_ip}
     redis-server:
       ansible_host: ${redis_ip}
+    %{ if enable_grafana }
     grafana-server:
       ansible_host: ${grafana_ip}
+    %{ endif }
 
   vars:
     ansible_user: ubuntu
@@ -17,3 +19,5 @@ NC:
     ansible_become_method: sudo
     ansible_python_interpreter: /usr/bin/python3
     %{ if floating_ip != 0 }ansible_ssh_common_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ubuntu@${proxy_ip}"'%{ endif }
+    enable_grafana: ${ enable_grafana }
+    nextcloud_public_ip: ${ proxy_ip }

@@ -39,13 +39,26 @@
     regexp: "^;http_port = 3000$"
     line: "http_port = 3000"
     state: present
+  become: true
+
+- name: Reset Grafana admin password
+  ansible.builtin.command: grafana-cli {{ grafana_user }} reset-admin-password {{ grafana_pass }}
+  register: reset_pass_output
+  changed_when: "'Password updated successfully' in reset_pass_output.stdout"
+  become: true
 
 - name: Enable Grafana service
   ansible.builtin.service:
       name: grafana-server
       state: started
       enabled: yes
-  notify: Restart grafana-server
+  become: true
+
+- name: Restart grafana-server
+  ansible.builtin.service:
+    name: grafana-server
+    state: restarted
+  become: true
 
 - name: Download dashboard JSON file
   ansible.builtin.get_url:
@@ -68,6 +81,7 @@
     status_code: 200
     force_basic_auth: true
     validate_certs: no
+  become: true
 
 - name: Configure datasource for Mariadb
   ansible.builtin.uri:
@@ -80,6 +94,7 @@
     status_code: 200
     force_basic_auth: true
     validate_certs: no
+  become: true
 
 - name: Configure datasource for NextCloud
   ansible.builtin.uri:
@@ -92,6 +107,7 @@
     status_code: 200
     force_basic_auth: true
     validate_certs: no
+  become: true
 
 - name: Create dashboard for Nextcloud Architecture
   ansible.builtin.uri:

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     openstack = {
       source = "terraform-provider-openstack/openstack"
-    version = "1.50.0" }
+    version = "1.53.0" }
   }
 }
 
@@ -15,7 +15,7 @@ resource "openstack_compute_instance_v2" "next-cloud" {
   security_groups = [
     "${openstack_compute_secgroup_v2.all-open-local.id}",
     "${openstack_compute_secgroup_v2.ssh-public.id}",
-    "${openstack_compute_secgroup_v2.http-public.id}",
+    "${openstack_compute_secgroup_v2.https-public.id}",
 
   ]
 
@@ -80,13 +80,14 @@ resource "openstack_compute_instance_v2" "redis" {
 }
 
 resource "openstack_compute_instance_v2" "grafana" {
+  count       = var.grafana_node.enabled ? 1 : 0
   name        = var.grafana_node.name
   flavor_name = var.grafana_node.flavor_name
   key_pair    = var.grafana_node.key_pair
   security_groups = [
     "${openstack_compute_secgroup_v2.all-open-local.id}",
     "${openstack_compute_secgroup_v2.ssh-public.id}",
-    "${openstack_compute_secgroup_v2.tcp3000-public.id}",
+    "${openstack_compute_secgroup_v2.grafana-public.id}",
   ]
 
   block_device {
@@ -103,11 +104,18 @@ resource "openstack_compute_instance_v2" "grafana" {
   }
 }
 
-# Associate floating IP to the Master node.
-resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+# Associate floating IP to the Nextcloud node.
+resource "openstack_compute_floatingip_associate_v2" "fip_nextcloud" {
   count       = var.next_cloud_node.floating_ip == "" ? 0 : 1
   floating_ip = var.next_cloud_node.floating_ip
   instance_id = openstack_compute_instance_v2.next-cloud.id
+}
+
+# Associate floating IP to the Grafana node.
+resource "openstack_compute_floatingip_associate_v2" "fip_grafana" {
+  count       = (var.grafana_node.enabled && var.grafana_node.floating_ip != "") ? 1 : 0
+  floating_ip = var.grafana_node.floating_ip
+  instance_id = var.grafana_node.enabled ? openstack_compute_instance_v2.grafana[0].id : ""
 }
 
 resource "local_file" "ansible_inventory" {
@@ -117,7 +125,8 @@ resource "local_file" "ansible_inventory" {
     next_cloud_ip   = openstack_compute_instance_v2.next-cloud.network[0].fixed_ip_v4
     maria_db_ip   = openstack_compute_instance_v2.maria-db.network[0].fixed_ip_v4
     redis_ip = openstack_compute_instance_v2.redis.network[0].fixed_ip_v4
-    grafana_ip = openstack_compute_instance_v2.grafana.network[0].fixed_ip_v4
+    enable_grafana = var.grafana_node.enabled
+    grafana_ip     = var.grafana_node.enabled ? join("", openstack_compute_instance_v2.grafana[*].network[0].fixed_ip_v4) : ""
     }
   )
   filename = "../ansible/hosts.yml"

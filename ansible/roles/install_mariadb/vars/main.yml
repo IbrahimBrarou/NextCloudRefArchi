@@ -1,2 +1,3 @@
 nextcloud_host: "{{ hostvars['nextcloud-server']['ansible_host'] }}"
 mariadb_host: "{{ hostvars['mariadb-server']['ansible_host'] }}"
+enable_grafana: "{{ hostvars['mariadb-server']['enable_grafana'] }}"

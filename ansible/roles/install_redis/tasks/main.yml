@@ -11,21 +11,29 @@
     path: /etc/redis/redis.conf
     regexp: "^bind"
     line: "bind 0.0.0.0"
-  notify: Restart Redis service
+  become: true
 
 - name: Enable Redis service
   ansible.builtin.service:
     name: redis-server
     enabled: yes
-  notify: Restart Redis service
+  become: true
+
+- name: Restart Redis service
+  ansible.builtin.service:
+    name: redis-server
+    state: restarted
+  become: true
 
 - name: Include Prometheus setup
   include_role:
     name: install_prometheus
+  when: enable_grafana
 
 - name: Include node_exporter setup
   include_role:
     name: install_node_exporter
+  when: enable_grafana
 
 - name: Add job to Prometheus configuration
   ansible.builtin.blockinfile:
@@ -40,3 +48,4 @@
     insertafter: EOF
     state: present
   notify: Restart prometheus service
+  when: enable_grafana
